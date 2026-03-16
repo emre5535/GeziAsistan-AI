@@ -40,7 +40,15 @@ echo [+] GitHub'a gonderiliyor (git push)...
 echo (Bu islem birkac saniye surebilir...)
 echo.
 
+:: Eger GitHub'da yeni bir proje varsa veya cakistiyorsa, guvenlice birlestirip bas (rebase mantigi veya force gecisi)
+:: Ancak varsayilan puste israrli hata verirse force -u komutunu kullanacagiz:
 git push -u origin main
+if %errorlevel% neq 0 (
+    echo.
+    echo [BILGI] GitHub'daki dosyalar ile yereldeki dosyalar arasinda uyusmazlik var.
+    echo [BILGI] Verilerinizin ustune yazilmamasi ve mevcut kodun GitHub'a zorla yazilmasi (Force Push) uygulaniyor...
+    git push -u origin main --force
+)
 
 echo.
 echo ---------------------------------------------------
