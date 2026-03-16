@@ -1,5 +1,5 @@
 import { Navigation, Clock } from 'lucide-react';
-import { roadDistanceKm, travelTimeMinutes } from '../utils/algorithms';
+import { roadDistanceKm, travelTimeMinutes, formatDuration } from '../utils/algorithms';
 
 export function Connector({ from, to }) {
   const validCoords =
@@ -35,7 +35,7 @@ export function Connector({ from, to }) {
             </span>
             <span className="inline-flex items-center gap-1 text-xs text-secondary card-bg px-2 py-0.5 rounded-xl border card-border">
               <Clock size={10} className="text-sky-500" />
-              ~{travelMin} dk
+              ~{formatDuration(travelMin)} 
             </span>
           </>
         ) : (

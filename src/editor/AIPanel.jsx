@@ -31,6 +31,8 @@ export function AIPanel({ itinerary, activeDay, routeName, onUpdateItinerary, on
   const [chatMessages, setChatMessages] = useState([]);
   const [chatInput, setChatInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
+  const [proposedStops, setProposedStops] = useState(null);
+
   const abortRef = useRef(null);
 
   const dayItems = itinerary.filter((i) => i.day === activeDay).sort((a, b) => a.order - b.order);
@@ -83,6 +85,7 @@ export function AIPanel({ itinerary, activeDay, routeName, onUpdateItinerary, on
   const handlePropose = async () => {
     if (!preferenceText.trim() || hasStops) return;
     setProposing(true);
+    setProposedStops(null);
     abortRef.current = new AbortController();
     try {
       const prompt = `Bir turist için ${activeDay}. gün planı hazırla. Tercihler: "${preferenceText}". En fazla 5 durak öner. YALNIZCA JSON döndür:\n[{"name":"Yer Adı","lat":0.0,"lng":0.0,"duration":60,"isAccommodation":false}]`;
@@ -91,9 +94,7 @@ export function AIPanel({ itinerary, activeDay, routeName, onUpdateItinerary, on
       if (!match) throw new Error('JSON parse error');
       const stops = JSON.parse(match[0]);
       const withIds = stops.slice(0, 5).map((s, i) => ({ ...s, id: nanoid(8), day: activeDay, order: i, notes: '' }));
-      onAddStops(withIds);
-      toast.success(`${withIds.length} durak eklendi! 🗺️`);
-      setPreferenceText('');
+      setProposedStops(withIds);
     } catch (e) {
       if (e.name !== 'AbortError') toast.error(e.message || 'Öneri alınamadı.');
     } finally {
@@ -102,6 +103,15 @@ export function AIPanel({ itinerary, activeDay, routeName, onUpdateItinerary, on
   };
 
   // ── 4. Chat ──────────────────────────────────────────────────────────────
+  const commitProposedStops = () => {
+    if (proposedStops && proposedStops.length > 0) {
+      onAddStops(proposedStops);
+      toast.success(`${proposedStops.length} durak rotaya eklendi! 🗺️`);
+      setPreferenceText('');
+      setProposedStops(null);
+    }
+  };
+
   const handleChat = async () => {
     if (!chatInput.trim() || chatLoading) return;
     const userMsg = { role: 'user', text: chatInput };
@@ -179,20 +189,42 @@ export function AIPanel({ itinerary, activeDay, routeName, onUpdateItinerary, on
             <MapPin size={14} className="text-sky-500" />
             <h4 className="text-sm font-semibold text-primary">Güne Rota Öner</h4>
           </div>
-          <p className="text-xs text-muted">Bu gün için tercihlerine göre duraklar önersin.</p>
-          <input
-            type="text"
-            placeholder="örn: tarihi yerler, deniz manzarası..."
-            value={preferenceText}
-            onChange={(e) => setPreferenceText(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handlePropose()}
-            className="w-full input-themed rounded-2xl px-3 py-2 text-xs placeholder-zinc-500"
-            aria-label="Gün tercihleri"
-          />
-          <button onClick={handlePropose} disabled={proposing || !preferenceText.trim()} className={BTN_CLS} aria-label="Günü planla">
-            {proposing ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} className="text-sky-400" />}
-            {proposing ? 'Planlanıyor...' : 'Günü Planla'}
-          </button>
+          
+          {proposedStops ? (
+            <div className="space-y-3 animate-in fade-in zoom-in duration-300">
+              <p className="text-xs text-secondary font-medium">Bu duraklar bulundu:</p>
+              <div className="space-y-1">
+                {proposedStops.map((stop, i) => (
+                  <div key={i} className="flex items-center gap-2 px-3 py-2 bg-black/5 dark:bg-white/5 rounded-xl">
+                    <MapPin size={12} className="text-sky-500" />
+                    <span className="text-sm flex-1 truncate text-primary">{stop.name}</span>
+                    <span className="text-xs text-muted">{stop.duration} dk</span>
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-2 mt-2">
+                <button onClick={commitProposedStops} className="flex-1 btn-primary py-2 rounded-xl text-xs font-medium">Rotaya Ekle</button>
+                <button onClick={() => setProposedStops(null)} className="px-4 py-2 icon-btn rounded-xl text-xs font-medium">İptal</button>
+              </div>
+            </div>
+          ) : (
+            <>
+              <p className="text-xs text-muted">Bu gün için tercihlerine göre duraklar önersin.</p>
+              <input
+                type="text"
+                placeholder="örn: tarihi yerler, deniz manzarası..."
+                value={preferenceText}
+                onChange={(e) => setPreferenceText(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handlePropose()}
+                className="w-full input-themed rounded-2xl px-3 py-2 text-xs placeholder-zinc-500"
+                aria-label="Gün tercihleri"
+              />
+              <button onClick={handlePropose} disabled={proposing || !preferenceText.trim()} className={BTN_CLS} aria-label="Günü planla">
+                {proposing ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} className="text-sky-400" />}
+                {proposing ? 'Planlanıyor...' : 'Günü Planla'}
+              </button>
+            </>
+          )}
         </div>
       )}
 

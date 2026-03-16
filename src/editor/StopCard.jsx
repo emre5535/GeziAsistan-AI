@@ -23,7 +23,16 @@ const MapPreview = memo(({ lat, lng, name }) => {
   const [loaded, setLoaded] = useState(false);
   if (!lat || !lng) return null;
   return (
-    <div className="map-preview relative w-16 h-16 rounded-2xl overflow-hidden flex-shrink-0 bg-zinc-800">
+    <a 
+      href={`https://maps.google.com/maps?q=${lat},${lng}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="map-preview relative w-16 h-16 rounded-2xl overflow-hidden flex-shrink-0 bg-zinc-800 block cursor-pointer group"
+      title={`${name} - Haritada Aç`}
+    >
+      <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex items-center justify-center pointer-events-none">
+        <ExternalLink size={16} className="text-white drop-shadow-md" />
+      </div>
       {!loaded && <div className="absolute inset-0 skeleton-shimmer bg-zinc-800 animate-pulse rounded-2xl" aria-hidden="true" />}
       <iframe
         title={`${name} harita`}
@@ -35,7 +44,7 @@ const MapPreview = memo(({ lat, lng, name }) => {
         style={{ pointerEvents: 'none' }}
         aria-hidden="true"
       />
-    </div>
+    </a>
   );
 });
 
