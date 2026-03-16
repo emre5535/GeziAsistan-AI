@@ -13,7 +13,6 @@ export function SmartSearch({ onAddStop }) {
   const [errorInfo, setErrorInfo] = useState(null);
   const [showCoordInput, setShowCoordInput] = useState(false);
   const [coord, setCoord] = useState({ name: '', lat: '', lng: '' });
-  const debounceRef = useRef(null);
   const abortRef = useRef(null);
 
   const search = useCallback(async (q) => {
@@ -64,12 +63,21 @@ export function SmartSearch({ onAddStop }) {
   }, []);
 
   const handleChange = (e) => {
-    const val = e.target.value;
-    setQuery(val);
-    setResults([]);
+    setQuery(e.target.value);
     setErrorInfo(null);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => search(val), 1500);
+  };
+
+  const handleSearch = () => {
+    if (query.trim()) {
+      search(query.trim());
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSearch();
+    }
   };
 
   const handleSelect = (loc) => {
@@ -100,19 +108,27 @@ export function SmartSearch({ onAddStop }) {
       {/* Search input */}
       <div className="relative">
         <div className="flex items-center gap-2 input-themed rounded-2xl px-4 py-3 focus-within:ring-2 focus-within:ring-blue-500/50 transition-all">
-          <Search size={16} className="text-secondary flex-shrink-0" />
+          <button 
+            type="button"
+            onClick={handleSearch}
+            className="p-1 rounded-xl hover:bg-white/10 text-secondary hover:text-primary transition-colors flex-shrink-0"
+            aria-label="Ara"
+          >
+            <Search size={16} />
+          </button>
           <input
             type="text"
-            placeholder="Konum ara ve ekle... (min 3 karakter)"
+            placeholder="Konum ara... (yazıp Enter'a basın)"
             value={query}
             onChange={handleChange}
+            onKeyDown={handleKeyDown}
             className={INPUT_CLS}
             aria-label="Konum ara"
             autoComplete="off"
           />
           {loading && <Loader2 size={14} className="text-blue-400 animate-spin flex-shrink-0" />}
           {query && !loading && (
-            <button onClick={() => { setQuery(''); setResults([]); }} className="icon-btn" aria-label="Temizle">
+            <button type="button" onClick={() => { setQuery(''); setResults([]); }} className="icon-btn flex-shrink-0" aria-label="Temizle">
               <X size={14} />
             </button>
           )}
