@@ -12,6 +12,10 @@ async function callGemini(prompt, signal) {
     body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
     signal,
   });
+  if (!res.ok) {
+    if (res.status === 429) throw new Error('Çok hızlı işlem yapıyorsunuz. Lütfen biraz bekleyip tekrar deneyin.');
+    throw new Error('Yapay zeka yanıt veremedi.');
+  }
   const data = await res.json();
   return data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
 }
@@ -52,7 +56,7 @@ export function AIPanel({ itinerary, activeDay, routeName, onUpdateItinerary, on
       onUpdateItinerary(reordered);
       toast.success('Rota optimize edildi! 🎯');
     } catch (e) {
-      if (e.name !== 'AbortError') toast.error('Optimizasyon başarısız.');
+      if (e.name !== 'AbortError') toast.error(e.message || 'Optimizasyon başarısız.');
     } finally {
       setOptimizing(false);
     }
@@ -69,7 +73,7 @@ export function AIPanel({ itinerary, activeDay, routeName, onUpdateItinerary, on
       const text = await callGemini(prompt, abortRef.current.signal);
       setSuggestions(text);
     } catch (e) {
-      if (e.name !== 'AbortError') toast.error('Öneri alınamadı.');
+      if (e.name !== 'AbortError') toast.error(e.message || 'Öneri alınamadı.');
     } finally {
       setSuggesting(false);
     }
@@ -91,7 +95,7 @@ export function AIPanel({ itinerary, activeDay, routeName, onUpdateItinerary, on
       toast.success(`${withIds.length} durak eklendi! 🗺️`);
       setPreferenceText('');
     } catch (e) {
-      if (e.name !== 'AbortError') toast.error('Öneri alınamadı.');
+      if (e.name !== 'AbortError') toast.error(e.message || 'Öneri alınamadı.');
     } finally {
       setProposing(false);
     }
@@ -113,7 +117,7 @@ export function AIPanel({ itinerary, activeDay, routeName, onUpdateItinerary, on
       const text = await callGemini(prompt, abortRef.current.signal);
       setChatMessages((prev) => [...prev, { role: 'assistant', text }]);
     } catch (e) {
-      if (e.name !== 'AbortError') toast.error('AI yanıt veremedi.');
+      if (e.name !== 'AbortError') toast.error(e.message || 'AI yanıt veremedi.');
     } finally {
       setChatLoading(false);
     }

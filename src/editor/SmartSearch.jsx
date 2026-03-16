@@ -10,19 +10,21 @@ export function SmartSearch({ onAddStop }) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [errorInfo, setErrorInfo] = useState(null);
   const [showCoordInput, setShowCoordInput] = useState(false);
   const [coord, setCoord] = useState({ name: '', lat: '', lng: '' });
   const debounceRef = useRef(null);
   const abortRef = useRef(null);
 
   const search = useCallback(async (q) => {
-    if (q.length < 3) { setResults([]); return; }
+    if (q.length < 3) { setResults([]); setErrorInfo(null); return; }
 
     if (abortRef.current) abortRef.current.abort();
     const controller = new AbortController();
     abortRef.current = controller;
 
     setLoading(true);
+    setErrorInfo(null);
     try {
       const apiKey = window.__gemini_api_key || '';
       const prompt = `Kullanıcının girdiği metin: "${q}"\nGörevin: Bu metinle alakalı en fazla 5 gerçek lokasyon öner.\nYALNIZCA aşağıdaki JSON formatında yanıt ver, başka hiçbir şey yazma:\n[{"name":"Lokasyon Adı","lat":0.0,"lng":0.0,"country":"TR"}]`;
@@ -33,6 +35,16 @@ export function SmartSearch({ onAddStop }) {
         body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
         signal: controller.signal,
       });
+
+      if (!res.ok) {
+        if (res.status === 429) {
+          setErrorInfo('Çok hızlı arama yaptınız. Lütfen birkaç saniye bekleyip tekrar deneyin.');
+        } else {
+          setErrorInfo('Arama sırasında bir hata oluştu.');
+        }
+        setResults([]);
+        return;
+      }
 
       const data = await res.json();
       const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
@@ -55,8 +67,9 @@ export function SmartSearch({ onAddStop }) {
     const val = e.target.value;
     setQuery(val);
     setResults([]);
+    setErrorInfo(null);
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => search(val), 800);
+    debounceRef.current = setTimeout(() => search(val), 1500);
   };
 
   const handleSelect = (loc) => {
@@ -104,6 +117,14 @@ export function SmartSearch({ onAddStop }) {
             </button>
           )}
         </div>
+
+        {/* Error label */}
+        {errorInfo && !loading && (
+          <div className="absolute top-full left-0 mt-2 px-4 py-2 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-2 text-red-500 text-xs z-10 w-full animate-in fade-in slide-in-from-top-1">
+            <X size={12} />
+            {errorInfo}
+          </div>
+        )}
 
         {/* Dropdown */}
         {results.length > 0 && (
