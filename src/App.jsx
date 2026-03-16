@@ -59,8 +59,20 @@ function InnerApp() {
   const [sharedLoading, setSharedLoading] = useState(false);
   const [sharedError, setSharedError] = useState(false);
 
+  // Guest and Local Route state
+  const [isGuest, setIsGuest] = useState(() => localStorage.getItem('gezi_guest_mode') === 'true');
+  const [guestRoutes, setGuestRoutes] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('gezi_guest_routes') || '[]'); } catch { return []; }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('gezi_guest_routes', JSON.stringify(guestRoutes));
+  }, [guestRoutes]);
+
+  const displayRoutes = user ? routes : guestRoutes;
+
   // Find the current route data
-  const activeRouteData = routes.find(r => r.id === activeRouteId) || activeRouteInitial;
+  const activeRouteData = displayRoutes.find(r => r.id === activeRouteId) || activeRouteInitial;
 
   // Undo/redo for itinerary
   const undoRedo = useUndoRedo(activeRouteData || {});
@@ -71,13 +83,13 @@ function InnerApp() {
   // When a pending route finally appears in 'routes', open it
   useEffect(() => {
     if (pendingRouteId) {
-      const found = routes.find(r => r.id === pendingRouteId);
+      const found = displayRoutes.find(r => r.id === pendingRouteId);
       if (found) {
         openRoute(found);
         setPendingRouteId(null);
       }
     }
-  }, [routes, pendingRouteId]);
+  }, [displayRoutes, pendingRouteId]);
 
   // URL deep linking: ?route=<id>&owner=<uid>
   useEffect(() => {
@@ -98,18 +110,18 @@ function InnerApp() {
             .finally(() => setSharedLoading(false));
         }
       } else {
-        const found = routes.find(r => r.id === rid);
+        const found = displayRoutes.find(r => r.id === rid);
         if (found) openRoute(found);
       }
     }
-  }, [user, routes, activeRouteData, view, sharedRouteData, sharedLoading, sharedError]);
+  }, [user, displayRoutes, activeRouteData, view, sharedRouteData, sharedLoading, sharedError]);
 
   // Redirect based on auth
   useEffect(() => {
     if (authLoading) return;
-    if (!user) setView('login');
+    if (!user && !isGuest) setView('login');
     else if (view === 'login') setView('dashboard');
-  }, [user, authLoading]);
+  }, [user, isGuest, authLoading, view]);
 
   const openRoute = (route) => {
     setActiveRouteId(route.id);
@@ -123,18 +135,33 @@ function InnerApp() {
   };
 
   const handleOpenRoute = (id) => {
-    const found = routes.find(r => r.id === id);
+    const found = displayRoutes.find(r => r.id === id);
     if (found) openRoute(found);
   };
 
   const handleCreateRoute = async (name) => {
     try {
+      if (!user && isGuest) {
+        const newId = `local-${Date.now()}`;
+        const newRoute = {
+          id: newId,
+          name: name.trim(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          dayStartTimes: { 1: '09:00' },
+          dayDates: { 1: '' },
+          itinerary: [],
+        };
+        setGuestRoutes(prev => [newRoute, ...prev]);
+        setPendingRouteId(newId);
+        return newId;
+      }
       const newId = await createRoute(name);
       if (newId) setPendingRouteId(newId);
       return newId;
     } catch (error) {
       console.error('Create route error:', error);
-      toast.error('Rota oluşturulamadı. Lütfen giriş yapıp tekrar deneyin.');
+      toast.error('Rota oluşturulamadı. Lütfen tekrar deneyin.');
       throw error;
     }
   };
@@ -159,6 +186,23 @@ function InnerApp() {
 
   const handleSaveSharedRoute = async () => {
     if (!sharedRouteData) return;
+
+    if (!user && isGuest) {
+      const newId = `local-${Date.now()}`;
+      const toSave = { ...sharedRouteData, name: `${sharedRouteData.name} (Paylaşılan)`, id: newId, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+      setGuestRoutes(prev => [toSave, ...prev]);
+      
+      setSharedRouteData(null);
+      const url = new URL(window.location.href);
+      url.searchParams.delete('owner');
+      url.searchParams.set('route', newId);
+      window.history.pushState({}, '', url);
+      
+      openRoute(toSave);
+      toast.success('Paylaşılan rota başarıyla kopyalandı! 🚀');
+      return;
+    }
+
     const newId = await createRoute(`${sharedRouteData.name} (Paylaşılan)`);
     if (newId) {
       const toSave = { ...sharedRouteData, name: `${sharedRouteData.name} (Paylaşılan)`, id: undefined };
@@ -176,10 +220,15 @@ function InnerApp() {
     }
   };
 
+  const handleGuestSignIn = () => {
+    setIsGuest(true);
+    localStorage.setItem('gezi_guest_mode', 'true');
+  };
+
   if (authLoading || sharedLoading) return <FullScreenLoader message="Bilgiler yükleniyor..." />;
 
-  if (view === 'login' || !user) {
-    return <LoginScreen onSignIn={signIn} loading={authLoading} signingIn={signingIn} error={authError} />;
+  if (view === 'login' || (!user && !isGuest)) {
+    return <LoginScreen onSignIn={signIn} onGuestSignIn={handleGuestSignIn} loading={authLoading} signingIn={signingIn} error={authError} />;
   }
 
   // Check if we need to render shared route modal overlay
@@ -219,13 +268,14 @@ function InnerApp() {
   if (view === 'editor' && activeRouteData) {
     return (
       <EditorScreen
-        uid={user.uid}
+        uid={user ? user.uid : 'guest'}
         routeId={activeRouteId}
         initialRoute={activeRouteInitial}
         onBack={handleBackToDashboard}
-        saveStatus={saveStatus}
+        saveStatus={user ? saveStatus : { status: 'saved', setSaving: ()=>{}, setSaved: ()=>{}, setError: ()=>{} }}
         toast={toast}
         undoRedo={undoRedo}
+        onGuestSave={!user ? (data) => setGuestRoutes(prev => prev.map(r => r.id === activeRouteId ? { ...r, ...data, updatedAt: new Date().toISOString() } : r)) : null}
       />
     );
   }
@@ -234,13 +284,13 @@ function InnerApp() {
     <>
       <DashboardScreen
         user={user}
-        routes={routes}
-        loading={routesLoading}
+        routes={displayRoutes}
+        loading={user ? routesLoading : false}
         onOpenRoute={handleOpenRoute}
         onCreateRoute={handleCreateRoute}
-        onDeleteRoute={deleteRoute}
-        onCopyRoute={copyRoute}
-        onLogout={logout}
+        onDeleteRoute={user ? deleteRoute : (id) => setGuestRoutes(prev => prev.filter(r => r.id !== id))}
+        onCopyRoute={user ? copyRoute : (route) => setGuestRoutes(prev => [{...route, id: `local-${Date.now()}`, name: `${route.name} (Kopya)`, createdAt: new Date().toISOString()}, ...prev])}
+        onLogout={() => { logout(); setIsGuest(false); localStorage.removeItem('gezi_guest_mode'); }}
       />
       {renderSharedModal()}
     </>

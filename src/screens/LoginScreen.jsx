@@ -6,7 +6,7 @@ import { useTheme } from '../contexts/ThemeContext';
 
 
 
-export function LoginScreen({ onSignIn, loading, signingIn, error }) {
+export function LoginScreen({ onSignIn, onGuestSignIn, loading, signingIn, error }) {
   const { theme } = useTheme();
   const [rememberMe, setRememberMe] = useState(true);
 
@@ -99,9 +99,19 @@ export function LoginScreen({ onSignIn, loading, signingIn, error }) {
           )}
           {signingIn ? 'Giriş yapılıyor...' : 'Google ile Giriş Yap'}
           </button>
+          
+          <button
+            onClick={onGuestSignIn}
+            disabled={signingIn || loading}
+            className="w-full py-4 px-6 rounded-[1.25rem] text-sm font-semibold text-secondary hover:text-primary bg-white/5 hover:bg-white/10 card-border border transition-all"
+            aria-label="Misafir olarak devam et"
+          >
+            Misafir Olarak Devam Et
+          </button>
 
         <p className="text-center text-muted text-xs">
-          Giriş yaparak hizmet koşullarını kabul etmiş olursunuz.
+          Misafir olarak oluşturduğunuz rotalar tarayıcınıza kaydedilir.<br/>
+          Kalıcı erişim için giriş yapmanız gereklidir.
         </p>
       </div>
     </div>

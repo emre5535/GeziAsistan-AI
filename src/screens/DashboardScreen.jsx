@@ -170,10 +170,14 @@ export function DashboardScreen({ user, routes, loading, onOpenRoute, onCreateRo
             <span className="font-bold text-primary text-lg hidden sm:block">Gezi Asistanı</span>
           </div>
           <div className="flex items-center gap-3">
-            {user?.photoURL && (
+            {user?.photoURL ? (
               <img src={user.photoURL} alt={user.displayName} className="w-8 h-8 rounded-full border border-white/20" referrerPolicy="no-referrer" />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center border border-blue-500/30">
+                <span className="text-blue-400 text-xs font-bold">M</span>
+              </div>
             )}
-            <span className="text-secondary text-sm hidden sm:block">{user?.displayName}</span>
+            <span className="text-secondary text-sm hidden sm:block">{user?.displayName || 'Misafir Kullanıcı'}</span>
             <ThemeToggle />
             <button
               onClick={onLogout}

@@ -39,7 +39,7 @@ function SaveIndicator({ status, onRetry }) {
   );
 }
 
-export function EditorScreen({ uid, routeId, initialRoute, onBack, saveStatus, toast, undoRedo }) {
+export function EditorScreen({ uid, routeId, initialRoute, onBack, saveStatus, toast, undoRedo, onGuestSave }) {
   const { state: route, set: setRoute, undo, redo, canUndo, canRedo } = undoRedo;
   const [activeDay, setActiveDay] = useState(1);
   const [mobileTab, setMobileTab] = useState('stops'); // 'stops' | 'ai'
@@ -54,13 +54,18 @@ export function EditorScreen({ uid, routeId, initialRoute, onBack, saveStatus, t
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(async () => {
       try {
+        if (uid === 'guest') {
+          if (onGuestSave) onGuestSave(data);
+          saveStatus.setSaved();
+          return;
+        }
         await saveRoute(uid, routeId, data);
         saveStatus.setSaved();
       } catch {
         saveStatus.setError();
       }
     }, 1500);
-  }, [uid, routeId, saveStatus]);
+  }, [uid, routeId, saveStatus, onGuestSave]);
 
   const updateRoute = useCallback((patch) => {
     const next = typeof patch === 'function' ? patch(route) : { ...route, ...patch };
@@ -157,6 +162,12 @@ export function EditorScreen({ uid, routeId, initialRoute, onBack, saveStatus, t
   const handleManualSave = async () => {
     saveStatus.setSaving();
     try {
+      if (uid === 'guest') {
+        if (onGuestSave) onGuestSave(route);
+        saveStatus.setSaved();
+        toast.success('Manuel olarak kaydedildi.');
+        return;
+      }
       await saveRoute(uid, routeId, route);
       saveStatus.setSaved();
       toast.success('Manuel olarak kaydedildi.');
