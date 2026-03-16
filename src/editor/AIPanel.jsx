@@ -2,23 +2,7 @@ import { useState, useRef } from 'react';
 import { Sparkles, Loader2, Send, Wand2, MessageSquare, Lightbulb, MapPin } from 'lucide-react';
 import { nanoid } from 'nanoid';
 
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent`;
-
-async function callGemini(prompt, signal) {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || window.__gemini_api_key || '';
-  const res = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
-    signal,
-  });
-  if (!res.ok) {
-    if (res.status === 429) throw new Error('Çok hızlı işlem yapıyorsunuz. Lütfen biraz bekleyip tekrar deneyin.');
-    throw new Error('Yapay zeka yanıt veremedi.');
-  }
-  const data = await res.json();
-  return data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-}
+import { callGeminiText } from '../utils/gemini';
 
 const BTN_CLS = 'w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl card-bg card-border text-primary text-sm font-medium hover:opacity-80 transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100';
 
@@ -46,7 +30,7 @@ export function AIPanel({ itinerary, activeDay, routeName, onUpdateItinerary, on
     try {
       const payload = dayItems.map(({ id, name, lat, lng, duration, isAccommodation }) => ({ id, name, lat, lng, duration, isAccommodation }));
       const prompt = `Aşağıdaki JSON dizisindeki lokasyonları coğrafi olarak en verimli sıraya diz (Gezgin Satıcı problemi / minimum toplam mesafe). Konaklama (isAccommodation: true) olan durakları günün SONUNA koy. YALNIZCA aynı id'lerle sıralanmış JSON dizisi döndür. Başka hiçbir şey yazma: ${JSON.stringify(payload)}`;
-      const text = await callGemini(prompt, abortRef.current.signal);
+      const text = await callGeminiText(prompt, abortRef.current.signal);
       const match = text.match(/\[[\s\S]*\]/);
       if (!match) throw new Error('JSON parse error');
       const sorted = JSON.parse(match[0]);
@@ -72,7 +56,7 @@ export function AIPanel({ itinerary, activeDay, routeName, onUpdateItinerary, on
     try {
       const allStops = itinerary.map((i) => `Gün ${i.day}: ${i.name} (${i.duration} dk)`).join('\n');
       const prompt = `Rota adı: "${routeName}"\nDuraklar:\n${allStops}\n\nBu rota için şunları incele ve Türkçe yanıt ver: potansiyel sorunlar, atlanan önemli yerler, daha iyi zaman dağılımı ve yerel ipuçları. Madde madde yaz, kalın başlıklar kullan.`;
-      const text = await callGemini(prompt, abortRef.current.signal);
+      const text = await callGeminiText(prompt, abortRef.current.signal);
       setSuggestions(text);
     } catch (e) {
       if (e.name !== 'AbortError') toast.error(e.message || 'Öneri alınamadı.');
@@ -89,7 +73,7 @@ export function AIPanel({ itinerary, activeDay, routeName, onUpdateItinerary, on
     abortRef.current = new AbortController();
     try {
       const prompt = `Bir turist için ${activeDay}. gün planı hazırla. Tercihler: "${preferenceText}". En fazla 5 durak öner. YALNIZCA JSON döndür:\n[{"name":"Yer Adı","lat":0.0,"lng":0.0,"duration":60,"isAccommodation":false}]`;
-      const text = await callGemini(prompt, abortRef.current.signal);
+      const text = await callGeminiText(prompt, abortRef.current.signal);
       const match = text.match(/\[[\s\S]*\]/);
       if (!match) throw new Error('JSON parse error');
       const stops = JSON.parse(match[0]);
@@ -124,7 +108,7 @@ export function AIPanel({ itinerary, activeDay, routeName, onUpdateItinerary, on
       const context = `Rota: "${routeName}". Duraklar: ${itinerary.map(i => i.name).join(', ')}.`;
       const conv = history.map((m) => `${m.role === 'user' ? 'Kullanıcı' : 'Asistan'}: ${m.text}`).join('\n');
       const prompt = `${context}\n\nSohbet:\n${conv}\n\nAsistan (Türkçe yanıtla):`;
-      const text = await callGemini(prompt, abortRef.current.signal);
+      const text = await callGeminiText(prompt, abortRef.current.signal);
       setChatMessages((prev) => [...prev, { role: 'assistant', text }]);
     } catch (e) {
       if (e.name !== 'AbortError') toast.error(e.message || 'AI yanıt veremedi.');

@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from 'react';
 import { Search, Loader2, MapPin, Plus, X, Check } from 'lucide-react';
 import { nanoid } from 'nanoid';
 
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent`;
+import { fetchWithGeminiFallback } from '../utils/gemini';
 
 const INPUT_CLS = 'flex-1 bg-transparent text-primary placeholder-zinc-500 focus:outline-none text-sm';
 
@@ -25,27 +25,11 @@ export function SmartSearch({ onAddStop }) {
     setLoading(true);
     setErrorInfo(null);
     try {
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY || window.__gemini_api_key || '';
       const prompt = `Kullanıcının girdiği metin: "${q}"\nGörevin: Bu metinle alakalı en fazla 5 gerçek lokasyon öner.\nYALNIZCA aşağıdaki JSON formatında yanıt ver, başka hiçbir şey yazma:\n[{"name":"Lokasyon Adı","lat":0.0,"lng":0.0,"country":"TR"}]`;
 
-      const res = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
-        signal: controller.signal,
-      });
-
-      if (!res.ok) {
-        if (res.status === 429) {
-          setErrorInfo('Çok hızlı arama yaptınız. Lütfen birkaç saniye bekleyip tekrar deneyin.');
-        } else {
-          setErrorInfo('Arama sırasında bir hata oluştu.');
-        }
-        setResults([]);
-        return;
-      }
-
-      const data = await res.json();
+      const payload = { contents: [{ parts: [{ text: prompt }] }] };
+      const data = await fetchWithGeminiFallback(payload, controller.signal);
+      
       const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
       // Extract JSON array from response
       const match = text.match(/\[[\s\S]*\]/);
@@ -56,7 +40,10 @@ export function SmartSearch({ onAddStop }) {
         setResults([]);
       }
     } catch (e) {
-      if (e.name !== 'AbortError') setResults([]);
+      if (e.name !== 'AbortError') {
+        setErrorInfo(e.isQuotaError ? 'Kotanız doldu, lütfen bekleyip tekrar deneyin.' : 'Arama sırasında bir hata oluştu.');
+        setResults([]);
+      }
     } finally {
       setLoading(false);
     }

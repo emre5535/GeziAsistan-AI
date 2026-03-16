@@ -4,7 +4,7 @@ import { nanoid } from 'nanoid';
 
 const INPUT_CLS = 'input-themed rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all w-full';
 
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent`;
+import { fetchWithGeminiFallback } from '../utils/gemini';
 
 export function WizardModal({ onClose, onComplete }) {
   const [step, setStep] = useState(1);
@@ -29,8 +29,6 @@ export function WizardModal({ onClose, onComplete }) {
 
     abortRef.current = new AbortController();
     try {
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY || window.__gemini_api_key || '';
-      
       // Calculate days
       const sDate = new Date(startDate);
       const eDate = new Date(endDate);
@@ -61,16 +59,8 @@ export function WizardModal({ onClose, onComplete }) {
         ]
       }`;
 
-      const res = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
-        signal: abortRef.current.signal,
-      });
-
-      if (!res.ok) throw new Error('API Hatası');
-
-      const data = await res.json();
+      const payload = { contents: [{ parts: [{ text: prompt }] }] };
+      const data = await fetchWithGeminiFallback(payload, abortRef.current.signal);
       const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
       
       const match = text.match(/\{[\s\S]*\}/);
