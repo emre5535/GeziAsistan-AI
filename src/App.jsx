@@ -140,29 +140,17 @@ function InnerApp() {
   };
 
   const handleCreateRoute = async (name) => {
-    try {
-      if (!user && isGuest) {
-        const newId = `local-${Date.now()}`;
-        const newRoute = {
-          id: newId,
-          name: name.trim(),
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          dayStartTimes: { 1: '09:00' },
-          dayDates: { 1: '' },
-          itinerary: [],
-        };
-        setGuestRoutes(prev => [newRoute, ...prev]);
-        setPendingRouteId(newId);
-        return newId;
-      }
-      const newId = await createRoute(name);
-      if (newId) setPendingRouteId(newId);
-      return newId;
-    } catch (error) {
-      console.error('Create route error:', error);
-      toast.error('Rota oluşturulamadı. Lütfen tekrar deneyin.');
-      throw error;
+    if (!user && isGuest) {
+      const newId = `local-${Date.now()}`;
+      setGuestRoutes(prev => [{ id: newId, name, startDate: '', startTime: '', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), itinerary: [] }, ...prev]);
+      setActiveRouteId(newId);
+      setView('editor');
+      return;
+    }
+    const id = await createRoute(name);
+    if (id) {
+      setActiveRouteId(id);
+      setView('editor');
     }
   };
 
@@ -288,6 +276,7 @@ function InnerApp() {
         loading={user ? routesLoading : false}
         onOpenRoute={handleOpenRoute}
         onCreateRoute={handleCreateRoute}
+        onImportRoute={handleImportRoute}
         onDeleteRoute={user ? deleteRoute : (id) => setGuestRoutes(prev => prev.filter(r => r.id !== id))}
         onCopyRoute={user ? copyRoute : (route) => setGuestRoutes(prev => [{...route, id: `local-${Date.now()}`, name: `${route.name} (Kopya)`, createdAt: new Date().toISOString()}, ...prev])}
         onLogout={() => { logout(); setIsGuest(false); localStorage.removeItem('gezi_guest_mode'); }}

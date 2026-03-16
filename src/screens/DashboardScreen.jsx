@@ -3,6 +3,7 @@ import { LogOut, Plus, Trash2, Copy, MapPin, Search, X, Check, Route, Calendar }
 import { AmbientBackground } from '../components/AmbientBackground';
 import { RouteSkeleton } from '../components/Skeleton';
 import { ThemeToggle } from '../components/ThemeToggle';
+import { getSampleRoute } from '../sampleRoute';
 import { formatTimestamp, computeRouteStats } from '../utils/algorithms';
 
 const INPUT_CLS = 'input-themed bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all w-full';
@@ -140,7 +141,7 @@ function NewRouteCard({ onCreate, onCancel }) {
   );
 }
 
-export function DashboardScreen({ user, routes, loading, onOpenRoute, onCreateRoute, onDeleteRoute, onCopyRoute, onLogout }) {
+export function DashboardScreen({ user, routes, loading, onOpenRoute, onCreateRoute, onDeleteRoute, onCopyRoute, onLogout, onImportRoute }) {
   const [search, setSearch] = useState('');
   const [showNewCard, setShowNewCard] = useState(false);
 
@@ -154,6 +155,12 @@ export function DashboardScreen({ user, routes, loading, onOpenRoute, onCreateRo
       setShowNewCard(false);
     } catch (e) {
       // Error handled by app
+    }
+  };
+
+  const handleLoadSample = () => {
+    if (onImportRoute) {
+      onImportRoute(getSampleRoute());
     }
   };
 
@@ -212,6 +219,14 @@ export function DashboardScreen({ user, routes, loading, onOpenRoute, onCreateRo
               />
             </div>
             <button
+              onClick={handleLoadSample}
+              className="hidden sm:flex items-center gap-2 px-4 py-2.5 card-border card-bg hover:bg-white/5 font-semibold rounded-2xl text-sm whitespace-nowrap text-secondary transition-all"
+              aria-label="Örnek Rota Yükle"
+            >
+              <MapPin size={16} className="text-blue-400" />
+              <span>Örnek Ege Turu Yükle</span>
+            </button>
+            <button
               onClick={() => setShowNewCard(true)}
               className="flex items-center gap-2 px-4 py-2.5 btn-primary font-semibold rounded-2xl text-sm whitespace-nowrap shadow-lg shadow-blue-500/20"
               aria-label="Yeni rota oluştur"
@@ -244,14 +259,24 @@ export function DashboardScreen({ user, routes, loading, onOpenRoute, onCreateRo
                 </p>
               </div>
               {!search && (
-                <button
-                  onClick={() => setShowNewCard(true)}
-                  className="flex items-center gap-2 px-6 py-3 btn-primary font-semibold rounded-2xl shadow-lg shadow-blue-500/20"
-                  aria-label="İlk rotayı oluştur"
-                >
-                  <Plus size={18} />
-                  Rota Oluştur
-                </button>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <button
+                    onClick={() => setShowNewCard(true)}
+                    className="flex items-center justify-center gap-2 px-6 py-3 btn-primary font-semibold rounded-2xl shadow-lg shadow-blue-500/20 w-full sm:w-auto"
+                    aria-label="İlk rotayı oluştur"
+                  >
+                    <Plus size={20} />
+                    İlk Rotanı Oluştur
+                  </button>
+                  <button
+                    onClick={handleLoadSample}
+                    className="flex items-center justify-center gap-2 px-6 py-3 card-border card-bg text-primary hover:bg-white/5 font-semibold rounded-2xl transition-all w-full sm:w-auto"
+                    aria-label="Örnek Ege Turu Yükle"
+                  >
+                    <MapPin size={20} className="text-blue-400" />
+                    Örnek Ege Turu Yükle
+                  </button>
+                </div>
               )}
             </div>
           ) : (
