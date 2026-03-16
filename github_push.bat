@@ -1,8 +1,7 @@
 @echo off
-setlocal
+setlocal DisableDelayedExpansion
 title GitHub Push Paneli
 
-:: Renk: Acik Mavi
 color 0B
 
 echo ===================================================
@@ -10,26 +9,27 @@ echo    GITHUB GUNCELLEME (PUSH) PANELI
 echo ===================================================
 echo.
 
-:: Git klasorunun olup olmadigini kontrol et
-if not exist ".git" (
-    echo [!] Gizli .git klasoru bulunamadi! Git repository baslatiliyor...
-    git init
-    git branch -M main
-    git remote add origin https://github.com/emre5535/GeziAsistan-AI.git
-    echo [+] Repository başarıyla kuruldu.
-    echo.
-)
+:: Klasor kontrolu ve baslatma
+if exist ".git" goto skip_init
+echo [!] .git klasoru bulunamadi! Git repository baslatiliyor...
+git init
+git branch -M main
+git remote add origin https://github.com/emre5535/GeziAsistan-AI.git
+echo [+] Repository basariyla kuruldu.
+echo.
+:skip_init
 
 echo [+] Degisiklikler hazirlaniyor (git add)...
 git add .
-
 echo.
+
 echo [!] Lutfen yaptiginiz degisikligi anlatan kisa bir not yazin:
 echo (Ornegin: "Hatalar giderildi" yazip Enter'a basin)
 echo.
 
+set "commit_msg="
 set /p commit_msg="Notunuz: "
-if "%commit_msg%"=="" set commit_msg=Guncelleme
+if not defined commit_msg set "commit_msg=Guncelleme"
 
 echo.
 echo [+] Degisiklikler kaydediliyor (git commit)...
@@ -40,16 +40,14 @@ echo [+] GitHub'a gonderiliyor (git push)...
 echo (Bu islem birkac saniye surebilir...)
 echo.
 
-:: Eger GitHub'da yeni bir proje varsa veya cakistiyorsa, guvenlice birlestirip bas (rebase mantigi veya force gecisi)
-:: Ancak varsayilan puste israrli hata verirse force -u komutunu kullanacagiz:
 git push -u origin main
-if %errorlevel% neq 0 (
-    echo.
-    echo [BILGI] GitHub'daki dosyalar ile yereldeki dosyalar arasinda uyusmazlik var.
-    echo [BILGI] Verilerinizin ustune yazilmamasi ve mevcut kodun GitHub'a zorla yazilmasi (Force Push) uygulaniyor...
-    git push -u origin main --force
-)
+if %ERRORLEVEL% EQU 0 goto push_success
 
+echo.
+echo [BILGI] Uyusmazlik tespit edildi. Kodlar zorla ustune yaziliyor (Force Push)...
+git push -u origin main --force
+
+:push_success
 echo.
 echo ---------------------------------------------------
 echo [TAMAMLANDI] Kodlariniz GitHub'a yuklendi!
