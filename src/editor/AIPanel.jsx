@@ -5,7 +5,7 @@ import { nanoid } from 'nanoid';
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent`;
 
 async function callGemini(prompt, signal) {
-  const apiKey = window.__gemini_api_key || '';
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || window.__gemini_api_key || '';
   const res = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

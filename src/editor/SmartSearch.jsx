@@ -25,7 +25,7 @@ export function SmartSearch({ onAddStop }) {
     setLoading(true);
     setErrorInfo(null);
     try {
-      const apiKey = window.__gemini_api_key || '';
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY || window.__gemini_api_key || '';
       const prompt = `Kullanıcının girdiği metin: "${q}"\nGörevin: Bu metinle alakalı en fazla 5 gerçek lokasyon öner.\nYALNIZCA aşağıdaki JSON formatında yanıt ver, başka hiçbir şey yazma:\n[{"name":"Lokasyon Adı","lat":0.0,"lng":0.0,"country":"TR"}]`;
 
       const res = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
