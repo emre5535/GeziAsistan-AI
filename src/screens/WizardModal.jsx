@@ -13,6 +13,7 @@ export function WizardModal({ onClose, onComplete }) {
 
   // Step 1
   const [routeName, setRouteName] = useState('');
+  const [departurePoint, setDeparturePoint] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
@@ -38,6 +39,7 @@ export function WizardModal({ onClose, onComplete }) {
 
       const prompt = `Görevin: Gezgin bir turist için ${daysCount} günlük mantıklı bir rota planı oluşturmak. YALNIZCA geçerli bir JSON formatında yanıt ver. Markdown veya açıklama KULLANMA.
       Planda olması istenen yerler: ${placesText}
+      Başlangıç Noktası: ${departurePoint || 'Belirtilmedi (uygun bir yerden başlat)'}
       Varsa konaklanacak yerler: ${accommodations || 'Belirtilmedi'}
       
       Çıktı tam olarak bu şemada olmalı:
@@ -126,13 +128,17 @@ export function WizardModal({ onClose, onComplete }) {
                   <label className="text-xs text-secondary font-medium mb-1 block">Rota Adı</label>
                   <input type="text" value={routeName} onChange={(e) => setRouteName(e.target.value)} className={INPUT_CLS} placeholder="Örn: Hafta Sonu Kapadokya Turu" autoFocus />
                 </div>
+                <div>
+                  <label className="text-xs text-secondary font-medium mb-1 block">Yola Çıkış (Başlangıç) Noktası</label>
+                  <input type="text" value={departurePoint} onChange={(e) => setDeparturePoint(e.target.value)} className={INPUT_CLS} placeholder="Örn: İstanbul, Kadıköy" />
+                </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs text-secondary font-medium mb-1 block">Başlangıç</label>
+                    <label className="text-xs text-secondary font-medium mb-1 block">Başlangıç Tarihi</label>
                     <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className={INPUT_CLS} />
                   </div>
                   <div>
-                    <label className="text-xs text-secondary font-medium mb-1 block">Bitiş</label>
+                    <label className="text-xs text-secondary font-medium mb-1 block">Bitiş Tarihi</label>
                     <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className={INPUT_CLS} min={startDate} />
                   </div>
                 </div>
@@ -202,7 +208,7 @@ export function WizardModal({ onClose, onComplete }) {
             {step < 3 ? (
               <button 
                 onClick={() => setStep(step + 1)} 
-                disabled={step === 1 && (!routeName || !startDate || !endDate)}
+                disabled={step === 1 && (!routeName || !departurePoint || !startDate || !endDate)}
                 className="px-5 py-2 btn-primary rounded-xl font-medium text-sm flex items-center gap-1 disabled:opacity-40"
               >
                 İleri <ChevronRight size={16} />
