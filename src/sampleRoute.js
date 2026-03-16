@@ -6,6 +6,8 @@ export const getSampleRoute = () => {
     name: "İzmir - Denizli Rota Planı",
     startDate: "19.03.2026",
     startTime: "08:00",
+    dayDates: { 1: "19.03.2026", 2: "20.03.2026", 3: "21.03.2026" },
+    dayStartTimes: { 1: "08:00", 2: "09:00", 3: "09:00" },
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     itinerary: [

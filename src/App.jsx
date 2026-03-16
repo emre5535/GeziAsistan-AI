@@ -155,17 +155,20 @@ function InnerApp() {
   };
 
   const handleImportRoute = async (routeData) => {
+    // Exclude id explicitly to prevent Firebase rejection of undefined values
+    const { id: _discardedId, ...restData } = routeData;
+    
     if (!user && isGuest) {
       const newId = `local-${Date.now()}`;
-      const toSave = { ...routeData, id: newId, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+      const toSave = { ...restData, id: newId, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
       setGuestRoutes(prev => [toSave, ...prev]);
       toast.success('Örnek rota eklendi! 🗺️');
     } else if (user) {
-      const newId = await createRoute(routeData.name);
+      const newId = await createRoute(restData.name);
       if (newId) {
-        const toSave = { ...routeData, id: undefined, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+        const toSave = { ...restData, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
         await saveRoute(user.uid, newId, toSave);
-        toast.success('Örnek rota eklendi! 🗺️');
+        toast.success('Örnek rota eklendi! 🗺️ (Lütfen rotayı açmak için listeden tıklayın)');
       }
     }
   };
