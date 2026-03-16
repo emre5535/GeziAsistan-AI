@@ -44,7 +44,7 @@ function RouteCard({ route, onOpen, onDelete, onCopy }) {
 
       {/* Action buttons */}
       <div
-        className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+        className="absolute top-4 right-4 flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -206,34 +206,36 @@ export function DashboardScreen({ user, routes, loading, onOpenRoute, onCreateRo
             <h2 className="text-2xl font-bold text-primary">Rotalarım</h2>
             <p className="text-secondary text-sm mt-1">{routes.length} rota</p>
           </div>
-          <div className="flex gap-3 items-center">
-            <div className="relative">
+          <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center w-full sm:w-auto">
+            <div className="relative w-full sm:w-auto">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
               <input
                 type="text"
                 placeholder="Rota ara..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="input-themed pl-9 pr-4 py-2.5 rounded-2xl text-sm w-48"
+                className="input-themed pl-9 pr-4 py-2.5 rounded-2xl text-sm w-full sm:w-48"
                 aria-label="Rota ara"
               />
             </div>
-            <button
-              onClick={handleLoadSample}
-              className="hidden sm:flex items-center gap-2 px-4 py-2.5 card-border card-bg hover:bg-white/5 font-semibold rounded-2xl text-sm whitespace-nowrap text-secondary transition-all"
-              aria-label="Örnek Rota Yükle"
-            >
-              <MapPin size={16} className="text-blue-400" />
-              <span>Örnek Ege Turu Yükle</span>
-            </button>
-            <button
-              onClick={() => setShowNewCard(true)}
-              className="flex items-center gap-2 px-4 py-2.5 btn-primary font-semibold rounded-2xl text-sm whitespace-nowrap shadow-lg shadow-blue-500/20"
-              aria-label="Yeni rota oluştur"
-            >
-              <Plus size={16} />
-              <span>Yeni Rota</span>
-            </button>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <button
+                onClick={handleLoadSample}
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 card-border card-bg hover:bg-white/5 font-semibold rounded-2xl text-xs sm:text-sm whitespace-nowrap text-secondary transition-all"
+                aria-label="Örnek Rota Yükle"
+              >
+                <MapPin size={16} className="text-blue-400" />
+                <span>Örnek Rota</span>
+              </button>
+              <button
+                onClick={() => setShowNewCard(true)}
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 btn-primary font-semibold rounded-2xl text-xs sm:text-sm whitespace-nowrap shadow-lg shadow-blue-500/20"
+                aria-label="Yeni rota oluştur"
+              >
+                <Plus size={16} />
+                <span>Yeni Rota</span>
+              </button>
+            </div>
           </div>
         </div>
 
