@@ -3,6 +3,7 @@ import { LogOut, Plus, Trash2, Copy, MapPin, Search, X, Check, Route, Calendar }
 import { AmbientBackground } from '../components/AmbientBackground';
 import { RouteSkeleton } from '../components/Skeleton';
 import { ThemeToggle } from '../components/ThemeToggle';
+import { WizardModal } from './WizardModal';
 import { getSampleRoute } from '../sampleRoute';
 import { formatTimestamp, computeRouteStats } from '../utils/algorithms';
 
@@ -106,35 +107,49 @@ function NewRouteCard({ onCreate, onCancel }) {
   };
 
   return (
-    <div className="rounded-[2rem] border card-border card-bg backdrop-blur-3xl p-5 space-y-3 relative overflow-hidden">
+    <div className="rounded-[2rem] border card-border card-bg backdrop-blur-3xl p-5 space-y-4 relative overflow-hidden">
       <div className="absolute inset-0 bg-blue-500/5 pointer-events-none"></div>
-      <h3 className="font-semibold text-primary text-sm relative">Yeni Rota Oluştur</h3>
-      <input
-        autoFocus
-        type="text"
-        placeholder="Rota adı..."
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        onKeyDown={(e) => { if (e.key === 'Enter') handle(); if (e.key === 'Escape') onCancel(); }}
-        className={INPUT_CLS}
-        maxLength={80}
-        aria-label="Yeni rota adı"
-      />
-      <div className="flex gap-2">
+      <div className="flex items-center justify-between">
+        <h3 className="font-semibold text-primary text-sm relative">Nasıl Oluşturmak İstersiniz?</h3>
+        <button onClick={onCancel} className="icon-btn p-1 rounded-xl text-secondary"><X size={16} /></button>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {/* Manual */}
+        <div className="space-y-3 p-3 rounded-2xl bg-black/5 dark:bg-white/5 border card-border">
+          <div className="flex items-center gap-2 text-primary font-medium text-sm">
+            <Plus size={16} className="text-blue-500" /> Manuel Oluştur
+          </div>
+          <input
+            autoFocus
+            type="text"
+            placeholder="Rota adı..."
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') handle(); }}
+            className="input-themed bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white placeholder-zinc-500 w-full"
+            maxLength={80}
+          />
+          <button
+            onClick={handle}
+            disabled={!name.trim() || loading}
+            className="w-full py-2 btn-primary font-semibold rounded-xl text-xs disabled:opacity-40"
+          >
+            {loading ? 'Oluşturuluyor...' : 'Oluştur'}
+          </button>
+        </div>
+
+        {/* AI Wizard */}
         <button
-          onClick={handle}
-          disabled={!name.trim() || loading}
-          className="flex-1 py-2.5 btn-primary font-semibold rounded-2xl text-sm disabled:opacity-40"
-          aria-label="Rotayı oluştur"
+          onClick={() => { onCancel(); document.dispatchEvent(new CustomEvent('open-ai-wizard')); }}
+          className="flex flex-col text-left space-y-2 p-3 rounded-2xl bg-gradient-to-br from-blue-500/10 to-sky-500/10 border border-blue-500/20 hover:border-blue-500/40 hover:bg-blue-500/20 transition-all group"
         >
-          {loading ? 'Oluşturuluyor...' : 'Oluştur'}
-        </button>
-        <button
-          onClick={onCancel}
-          className="px-4 py-2.5 rounded-2xl icon-btn text-sm"
-          aria-label="İptal"
-        >
-          İptal
+          <div className="flex items-center gap-2 text-blue-500 font-medium text-sm">
+            <Sparkles size={16} /> AI Asistan ile Tasarla
+          </div>
+          <p className="text-secondary text-xs flex-1">
+            Gideceğiniz yerleri ve tarihleri söyleyin, yapay zeka sizin için en ideal rotayı çizsin.
+          </p>
         </button>
       </div>
     </div>
@@ -144,10 +159,27 @@ function NewRouteCard({ onCreate, onCancel }) {
 export function DashboardScreen({ user, routes, loading, onOpenRoute, onCreateRoute, onDeleteRoute, onCopyRoute, onLogout, onImportRoute }) {
   const [search, setSearch] = useState('');
   const [showNewCard, setShowNewCard] = useState(false);
+  const [showWizard, setShowWizard] = useState(false);
 
   const filtered = routes.filter((r) =>
     r.name.toLowerCase().includes(search.toLowerCase())
   );
+
+  // Listen for wizard open event
+  import('react').then(({ useEffect }) => {
+    useEffect(() => {
+      const handleOpen = () => setShowWizard(true);
+      document.addEventListener('open-ai-wizard', handleOpen);
+      return () => document.removeEventListener('open-ai-wizard', handleOpen);
+    }, []);
+  });
+
+  const handleWizardComplete = async (routeData) => {
+    setShowWizard(false);
+    if (onImportRoute) {
+      onImportRoute(routeData); // Imports treating it like a fully generated sample route
+    }
+  };
 
   const handleCreate = async (name) => {
     try {
@@ -294,6 +326,14 @@ export function DashboardScreen({ user, routes, loading, onOpenRoute, onCreateRo
           )}
         </div>
       </main>
+
+      {/* Wizard Modal overlay */}
+      {showWizard && (
+        <WizardModal 
+          onClose={() => setShowWizard(false)} 
+          onComplete={handleWizardComplete} 
+        />
+      )}
     </div>
   );
 }
