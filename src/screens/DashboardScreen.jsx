@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LogOut, Plus, Trash2, Copy, MapPin, Search, X, Check, Route, Calendar } from 'lucide-react';
+import { LogOut, Plus, Trash2, Copy, MapPin, Search, X, Check, Route, Calendar, Sparkles } from 'lucide-react';
 import { AmbientBackground } from '../components/AmbientBackground';
 import { RouteSkeleton } from '../components/Skeleton';
 import { ThemeToggle } from '../components/ThemeToggle';
