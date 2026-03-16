@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from 'react';
 import { Search, Loader2, MapPin, Plus, X, Check } from 'lucide-react';
 import { nanoid } from 'nanoid';
 
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`;
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent`;
 
 const INPUT_CLS = 'flex-1 bg-transparent text-primary placeholder-zinc-500 focus:outline-none text-sm';
 
