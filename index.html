@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Akıllı Gezi Asistanı</title>
+    <meta name="description" content="Seyahatini planla, yapay zekayla optimize et. AI destekli akıllı gezi ve rota planlama asistanı." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <script>
+      // ─── Ortam Değişkenleri ─────────────────────────────────────────────────
+      // Firebase config: kendi projenizin bilgilerini buraya girin.
+      window.__firebase_config = {
+        apiKey: "AIzaSyB-L0HJVOoI60OTyu5ljnoMVrsaTeUEoY4",
+        authDomain: "gezi-planlama-ai.firebaseapp.com",
+        projectId: "gezi-planlama-ai",
+        storageBucket: "gezi-planlama-ai.firebasestorage.app",
+        messagingSenderId: "613534096432",
+        appId: "1:613534096432:web:d0d89c46c799255c0961f5",
+        measurementId: "G-VEXQ09QQ0Z"
+      };
+      // Gemini API Key — Google AI Studio'dan alın: https://aistudio.google.com
+      window.__gemini_api_key = "YOUR_GEMINI_API_KEY";
+      // Uygulama ID (Firestore yol yapısında kullanılır)
+      window.__app_id = "gezi-planlama-ai";
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="./src/main.jsx"></script>
+  </body>
+</html>
