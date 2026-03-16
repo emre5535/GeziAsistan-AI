@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { LogOut, Plus, Trash2, Copy, MapPin, Search, X, Check, Route, Calendar, Sparkles } from 'lucide-react';
 import { AmbientBackground } from '../components/AmbientBackground';
 import { RouteSkeleton } from '../components/Skeleton';
@@ -166,13 +166,11 @@ export function DashboardScreen({ user, routes, loading, onOpenRoute, onCreateRo
   );
 
   // Listen for wizard open event
-  import('react').then(({ useEffect }) => {
-    useEffect(() => {
-      const handleOpen = () => setShowWizard(true);
-      document.addEventListener('open-ai-wizard', handleOpen);
-      return () => document.removeEventListener('open-ai-wizard', handleOpen);
-    }, []);
-  });
+  useEffect(() => {
+    const handleOpen = () => setShowWizard(true);
+    document.addEventListener('open-ai-wizard', handleOpen);
+    return () => document.removeEventListener('open-ai-wizard', handleOpen);
+  }, []);
 
   const handleWizardComplete = async (routeData) => {
     setShowWizard(false);
