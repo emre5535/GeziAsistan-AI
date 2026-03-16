@@ -154,6 +154,22 @@ function InnerApp() {
     }
   };
 
+  const handleImportRoute = async (routeData) => {
+    if (!user && isGuest) {
+      const newId = `local-${Date.now()}`;
+      const toSave = { ...routeData, id: newId, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+      setGuestRoutes(prev => [toSave, ...prev]);
+      toast.success('Örnek rota eklendi! 🗺️');
+    } else if (user) {
+      const newId = await createRoute(routeData.name);
+      if (newId) {
+        const toSave = { ...routeData, id: undefined, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+        await saveRoute(user.uid, newId, toSave);
+        toast.success('Örnek rota eklendi! 🗺️');
+      }
+    }
+  };
+
   const handleBackToDashboard = () => {
     setView('dashboard');
     setActiveRouteId(null);
